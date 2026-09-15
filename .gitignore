@@ -3,3 +3,10 @@ data_key
 admin_data
 my_api_keys
 conf/tls/nginx.*
+
+# Local lab data
+admin_data_old
+conjur-db-data/
+vault-data/
+config/
+telemetry/
