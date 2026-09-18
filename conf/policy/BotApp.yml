@@ -5,13 +5,41 @@
   - !user Dave
   - !host myDemoApp
   - !variable secretVar
-  - !permit
+  - !group app-identities
+  - !layer app-hosts
+
+    # Defines the members inside the group
+  - !grant
+    role: !group app-identities
+    member: !host myDemoApp
+
+  - !grant
+    role: !layer app-hosts
+    member: !host myDemoApp
+
     # Give permissions to the human user to update the secret and fetch the secret.
+  - !permit
     role: !user Dave
     privileges: [read, update, execute]
     resource: !variable secretVar
-  - !permit
+
     # Give permissions to the non-human identity to fetch the secret.
-    role: !host myDemoApp
+  - !permit
+    role: !group app-identities
     privileges: [read, execute]
     resource: !variable secretVar
+
+    # Give hosts created by the factory permission to fetch the secret.
+  - !permit
+    role: !layer app-hosts
+    privileges: [read, execute]
+    resource: !variable secretVar
+
+    # Host Factory dynamically creates new host identities and automatically
+    # adds those hosts to the specified layer.
+  - !host-factory
+    id: app-factory
+    layers: 
+      - !layer app-hosts
+
+ 

@@ -3,24 +3,24 @@ services:
     image: cyberark/conjur
     container_name: openssl
     entrypoint:
-     - openssl
-     - req
-     - -newkey
-     - rsa:2048
-     - -days
-     - "365"
-     - -nodes
-     - -x509
-     - -config
-     - /tmp/conf/tls.conf
-     - -extensions
-     - v3_ca
-     - -keyout
-     - /tmp/conf/nginx.key
-     - -out
-     - /tmp/conf/nginx.crt
+      - openssl
+      - req
+      - -newkey
+      - rsa:2048
+      - -days
+      - "365"
+      - -nodes
+      - -x509
+      - -config
+      - /tmp/conf/tls.conf
+      - -extensions
+      - v3_ca
+      - -keyout
+      - /tmp/conf/nginx.key
+      - -out
+      - /tmp/conf/nginx.crt
     volumes:
-     - ./conf/tls/:/tmp/conf:z
+      - ./conf/tls/:/tmp/conf:z
 
   bot_app:
     image: cfmanteiga/alpine-bash-curl-jq
@@ -28,7 +28,7 @@ services:
     container_name: bot_app
     command: tail -F anything
     volumes:
-    - ./program.sh:/tmp/program.sh
+      - ./program.sh:/tmp/program.sh
     restart: on-failure
 
   database:
@@ -39,9 +39,10 @@ services:
       POSTGRES_PASSWORD: SuperSecretPg
     ports:
       - "8432:5432"
+    volumes:
+      - conjur-db-data:/var/lib/postgresql/data
 
   pgadmin:
-#    https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html
     image: dpage/pgadmin4
     environment:
       PGADMIN_DEFAULT_EMAIL: user@domain.com
@@ -58,14 +59,9 @@ services:
       CONJUR_DATA_KEY:
       CONJUR_AUTHENTICATORS:
       CONJUR_TELEMETRY_ENABLED: 'false'
-      # By default Conjur API only returns 1000 resources (since 1.22.0)
-      # However this repo is used in testing scenarios where more than
-      # 1000 resources are present, so increase the limit.
-      # This is not a DoS risk as this code is not
-      # and must not be used for any form of production deployment.
       CONJUR_API_RESOURCE_LIST_LIMIT_MAX: 5000
     depends_on:
-    - database
+      - database
     restart: on-failure
     ports:
       - "8080:80"
@@ -79,15 +75,21 @@ services:
       - ./conf/:/etc/nginx/conf.d/:ro,z
       - ./conf/tls/:/etc/nginx/tls/:ro,z
     depends_on:
-    - conjur
-    - openssl
+      - conjur
+      - openssl
     restart: on-failure
 
   client:
     image: cyberark/conjur-cli:9
     container_name: conjur_client
-    depends_on: [ proxy ]
+    depends_on:
+      - proxy
     entrypoint: sleep
     command: infinity
     volumes:
-    - ./conf/policy:/policy
+      - ./conf/policy:/policy
+
+volumes:
+  conjur-db-data:
+    external: true
+    name: ee2b0794a50c63baa542c720a7af60136b960f69ebec7599ad48b96540cb0497
